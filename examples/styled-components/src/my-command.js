@@ -1,13 +1,16 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import styled from 'styled-components/primitives';
-import { render } from 'react-sketchapp';
+import { render, Text, Document, Page } from 'react-sketchapp';
 import chroma from 'chroma-js';
+import { colorsPrimary, getColorByName } from './tokens/colors';
 
-// take a hex and give us a nice text color to put over it
+const tileWidth = 275;
+const fontFamily = 'Avenir Next';
+
 const textColor = hex => {
   const vsWhite = chroma.contrast(hex, 'white');
-  if (vsWhite > 4) {
+  if (vsWhite > 2) {
     return '#FFF';
   }
   return chroma(hex)
@@ -16,40 +19,51 @@ const textColor = hex => {
 };
 
 const SwatchTile = styled.View`
-  height: 250px;
-  width: 250px;
-  border-radius: 4px;
-  margin: 4px;
+  width: ${tileWidth}px;
+  padding: 20px;
   background-color: ${props => props.hex};
-  justify-content: center;
-  align-items: center;
 `;
+
+// const SwatchTileChild = styled(SwatchTile)`
+//   height: 56px;
+// `;
 
 const SwatchName = styled.Text`
   color: ${props => textColor(props.hex)};
+  text-transform: uppercase;
+  font-family: '${fontFamily} Demi Bold';
+`;
+
+const Heading = styled.Text`
+  font-family: '${fontFamily}';
+  color: ${colorsPrimary.Eerie};
+  width: 100%;
+  margin-bottom: 100px;
+  font-size: 250px;
+  line-height: 250px;
   font-weight: bold;
 `;
 
-const Ampersand = styled.Text`
-  color: #f3f3f3;
-  font-size: 120px;
-  font-family: Himalaya;
-  line-height: 144px;
+const Subheading = styled.Text`
+  font-family: '${fontFamily}';
+  color: ${colorsPrimary.Eerie};
+  width: 100%;
+  font-size: 18px;
+  line-height: 18px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
 `;
 
-const Title = styled.Text`
-  font-size: 24px;
-  font-family: 'GT America';
-  font-weight: bold;
-  padding: 4px;
+const SwatchHex = styled.Text`
+  font-weight: normal;
 `;
 
-const Swatch = ({ name, hex }) => (
+const Swatch = ({ name, hex, isParent }) => (
   <SwatchTile name={`Swatch ${name}`} hex={hex}>
     <SwatchName name="Swatch Name" hex={hex}>
-      {name}
+      <Text>{name}</Text>
+      {isParent && <SwatchHex>{hex}</SwatchHex>}
     </SwatchName>
-    <Ampersand hex={hex}>&</Ampersand>
   </SwatchTile>
 );
 
@@ -61,30 +75,43 @@ const Color = {
 Swatch.propTypes = Color;
 
 const Artboard = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  width: ${(96 + 8) * 4}px;
-  justify-content: center;
+  display: flex;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  overflow: auto;
+  width: 600px;
 `;
 
-const Document = ({ colors }) => (
-  <Artboard name="Swatches">
-    <Title>Max’s Sweaters</Title>
+const ColorsDocument = ({ colors }) => (
+  <Artboard name="Colors">
+    <Heading>Web</Heading>
+    <Subheading>Primary Colors</Subheading>
     {Object.keys(colors).map(color => (
-      <Swatch name={color} hex={colors[color]} key={color} />
+      <Swatch name={color} hex={colors[color]} key={color} isParent={color.indexOf('_') === -1} />
     ))}
   </Artboard>
 );
 
-Document.propTypes = {
+const ComponentsDocument = ({ colors }) => (
+  <Artboard name="Components">
+    <Heading>Something</Heading>
+  </Artboard>
+);
+
+ColorsDocument.propTypes = {
   colors: PropTypes.objectOf(PropTypes.string).isRequired,
 };
 
 export default () => {
-  const colorList = {
-    Classic: '#96324E',
-    Neue: '#21304E',
-  };
-
-  render(<Document colors={colorList} />, context.document.currentPage());
+  render(
+    <Document>
+      <Page name="Colors">
+        <ColorsDocument colors={colorsPrimary} />
+      </Page>
+      {/* <Page>
+        <ComponentsDocument />
+      </Page> */}
+    </Document>,
+    require('sketch/dom').getSelectedDocument(),
+  );
 };
